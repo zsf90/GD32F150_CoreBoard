@@ -1,0 +1,56 @@
+/**
+ * @file main.c
+ * @author your name (you@domain.com)
+ * @brief
+ * @version 0.1
+ * @date 2022-03-08
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
+#include "FreeRTOS.h"
+#include "debug_printf.h"
+#include "delay.h"
+#include "gd32f1x0.h"
+#include "systick.h"
+#include "task.h"
+#include <stdio.h>
+
+// 定义一个任务
+#define LED1_TASK_PRIO 3       // 任务优先级
+#define LED1_STK_SIZE 50       // 任务堆栈大小
+TaskHandle_t LED1Task_Handler; // 定义任务句柄，一个任务一个任务句柄
+void led1_task(void *pvParameters); // 任务函数
+
+// 主函数
+int main(void) {
+    systick_config();
+    debug_printf_init(EVAL_COM0); // 使用 EVAL 库初始化 USART1
+    gd_eval_led_init(LED1);       // 使用 EVAL 库初始化 LED1
+
+    // 使用 xTaskCreate() 函数创建任务
+    xTaskCreate((TaskFunction_t)led1_task, \
+        (const char*)"led1_task", \
+        (uint16_t)LED1_STK_SIZE, \
+        (void*)NULL, \
+        (UBaseType_t)LED1_TASK_PRIO, \
+        (TaskHandle_t*)&LED1Task_Handler);
+        
+    vTaskStartScheduler();  // 启动任务调度器
+
+    while (1) {
+        printf("Hello,GD32F150C8T6\n");
+        delay_1ms(500);
+    }
+}
+
+
+// Task 函数
+void led1_task(void *pvParameters)
+{
+    while(1) {
+        gd_eval_led_toggle(LED1);
+        vTaskDelay(100);
+    }
+}
+

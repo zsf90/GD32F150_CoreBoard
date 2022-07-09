@@ -1,0 +1,244 @@
+/**
+ * @file    main.c
+ * @author  信念D力量
+ * @brief
+ * @version 0.1
+ * @date    2022-03-08
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
+#include "main.h"
+#include "FreeRTOS.h"
+#include "queue.h"
+#include "semphr.h"
+#include "task.h"
+#include "debug_printf.h"
+
+#include "gd32f1x0.h"
+#include "gd32f1x0r_eval.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+#include "key.h"
+
+/* send1 Task */
+#define SEND1_TASK_PRIO 0            // 任务优先级
+#define LED1_STK_SIZE 100            // 任务堆栈大小
+TaskHandle_t SEND1Task_Handler;      // 定义任务句柄，一个任务一个任务句柄
+void send_task1(void *pvParameters); // 任务函数
+
+/* send2 Task */
+#define SEND2_TASK_PRIO 0            // 任务优先级
+#define LED1_STK_SIZE 100            // 任务堆栈大小
+TaskHandle_t SEND2Task_Handler;      // 定义任务句柄，一个任务一个任务句柄
+void send_task2(void *pvParameters); // 任务函数
+
+/* LED2 Task */
+#define REV_TASK_PRIO  0
+#define LED2_STK_SIZE   100      // 50x4
+TaskHandle_t REVTask_Handler;
+void rev_task(void *pvParameters);
+
+/* 全局变量定义 */
+
+
+
+// 主函数
+int main(void) {
+    // ------ 函数初始化代码区 ------
+    key_init();
+    debug_printf_init(EVAL_COM0); // 使用 EVAL 库初始化 USART1
+    gd_eval_led_init(LED1);       // 使用 EVAL 库初始化 LED1
+    gd_eval_led_init(LED2);       // 使用 EVAL 库初始化 LED2
+    gd_eval_led_init(LED3);       // 使用 EVAL 库初始化 LED3
+
+
+
+    app_main();
+    
+    while (1) {
+
+    }
+}
+
+/*******************************************************************************
+function_name: app_main
+description: while(1) 前调用，该函数可以用来创建RTOS任务
+calls:
+called by:
+input: void*
+output:
+return: void
+others:
+*******************************************************************************/
+void app_main(void)
+{
+    // 创建一个消息队列
+    QueueHandle_t queue_handle_1;
+    queue_handle_1 = xQueueCreate(5, sizeof(char*));
+
+
+
+    if(queue_handle_1 != NULL) {
+        // 队列创建成功
+        // 创建任务 led1_task
+        xTaskCreate((TaskFunction_t)send_task1, \
+                    (const char*)"send_task1", \
+                    (uint16_t)LED1_STK_SIZE, \
+                    (void*)queue_handle_1, \
+                    (UBaseType_t)SEND1_TASK_PRIO, \
+                    (TaskHandle_t*)&SEND1Task_Handler);
+                    
+        // 创建任务 led1_task
+        xTaskCreate((TaskFunction_t)send_task2, \
+                    (const char*)"send_task2", \
+                    (uint16_t)LED1_STK_SIZE, \
+                    (void*)queue_handle_1, \
+                    (UBaseType_t)SEND2_TASK_PRIO, \
+                    (TaskHandle_t*)&SEND2Task_Handler);
+
+        // 创建任务 led2_task
+        xTaskCreate((TaskFunction_t)rev_task, \
+                    (const char*)"rev_task", \
+                    (uint16_t)LED2_STK_SIZE, \
+                    (void*)queue_handle_1, \
+                    (UBaseType_t)REV_TASK_PRIO, \
+                    (TaskHandle_t*)&REVTask_Handler);
+
+
+        // 启动任务调度器
+        vTaskStartScheduler();
+    } else {
+        // 队列创建失败
+    }
+}
+
+
+/*******************************************************************************
+function_name: send_task1
+description: FreeRTOS 任务函数
+calls:
+called by:
+input: void*
+output:
+return: void
+others:
+*******************************************************************************/
+void send_task1(void *pvParameters)
+{
+    // 把 pvParameters 转换成 消息队列
+    QueueHandle_t queue_handle;
+    queue_handle = (QueueHandle_t)pvParameters;
+
+    /* BaseType_t xQueueSend(QueueHandle_t xQueue,
+                             const void * pvItemToQueue,
+                             TickType_t xTicksToWait );
+    */
+
+    // 消息队列发送返回状态定义
+    BaseType_t queue_send_state;
+
+    // 定义一个用于消息队列的变量
+    int num = 111;
+
+    while(1) {
+        queue_send_state = xQueueSend(queue_handle, &num, 0);
+        if(queue_send_state != pdPASS) {
+            // 发送失败
+            
+        } else {
+            // 发送成功
+        }
+        gd_eval_led_toggle(LED1);
+        vTaskDelay(1000);
+    }
+} // send_task1 END!
+
+
+/*******************************************************************************
+function_name: send_task2
+description: FreeRTOS 任务函数
+calls:
+called by:
+input: void*
+output:
+return: void
+others:
+*******************************************************************************/
+void send_task2(void *pvParameters)
+{
+    // 把 pvParameters 转换成 消息队列
+    QueueHandle_t queue_handle;
+    queue_handle = (QueueHandle_t)pvParameters;
+
+    /* BaseType_t xQueueSend(QueueHandle_t xQueue,
+                             const void * pvItemToQueue,
+                             TickType_t xTicksToWait );
+    */
+
+    // 消息队列发送返回状态定义
+    BaseType_t queue_send_state;
+
+    // 定义一个用于消息队列的变量
+    int num = 222;
+
+    while(1) {
+        queue_send_state = xQueueSend(queue_handle, &num, 0);
+        if(queue_send_state != pdPASS) {
+            // 发送失败
+            
+        } else {
+            // 发送成功
+        }
+        gd_eval_led_toggle(LED1);
+        vTaskDelay(1000);
+    }
+} // send_task2 END!
+
+/*******************************************************************************
+function_name: led1_task
+description: FreeRTOS 任务函数
+calls:
+called by:
+input: void*
+output:
+return: void
+others:
+*******************************************************************************/
+void rev_task(void *pvParameters)
+{
+    // 把 pvParameters 转换成 消息队列
+    QueueHandle_t queue_handle;
+    queue_handle = (QueueHandle_t)pvParameters;
+
+    /* BaseType_t xQueueReceive(QueueHandle_t xQueue, 
+                                void *pvBuffer, 
+                                TickType_t xTicksToWait );
+    */
+
+    // 消息队列发送返回状态定义
+    BaseType_t queue_rec_state;
+    
+    int rev;
+    
+    while(1) {
+        
+            queue_rec_state = xQueueReceive(queue_handle, &rev, portMAX_DELAY);
+        
+            if (queue_rec_state != pdPASS) {
+                // 接收失败
+                printf("接收失败\n");
+            } else {
+                // 接收成功
+                printf("接收到的数据: %d\n", rev);
+            
+            }
+        free(pc_rev);
+        gd_eval_led_toggle(LED2);
+        vTaskDelay(1000);
+    }
+} // led2_task END!
+
+
+
