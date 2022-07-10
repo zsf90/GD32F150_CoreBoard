@@ -95,12 +95,9 @@ others:
 *******************************************************************************/
 void key_scan_task(void *pvParameters)
 {
-    FlagStatus btn_state;
+    
     while(1) {
-        // 读取按钮状态
-        btn_state = gpio_input_bit_get(BOARD_BTN_PORT, BOARD_BTN_PIN);
-        if (btn_state == RESET) {
-            // 设置事件组
+        if(key_scan(KEY1) == KEY_ON) {
             xEventGroupSetBits(Event_Handle, KEY1_EVENT);
         }
         vTaskDelay(10);
@@ -146,6 +143,10 @@ void led_task(void *pvParameters)
         
     }
 } // led_task
+
+
+
+
 
 
 

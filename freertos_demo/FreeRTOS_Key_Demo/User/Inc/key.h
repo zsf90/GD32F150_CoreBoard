@@ -22,7 +22,21 @@
 #define BOARD_BTN_EXTI_SOURCE_PIN   EXTI_SOURCE_PIN0
 #define BOARD_BTN_EXTI_IRQN         EXTI0_1_IRQn
 
+// 定义 KEY 枚举
+typedef enum
+{
+    KEY1 = 0,
+} KEY_t;
+
+typedef enum
+{
+    KEY_ON = 0, // 按键被按下
+    KEY_OFF,    // 按键未按下
+    KEY_ERROR,
+} Key_Scan_Result_t;
+
 
 void key_init(void); // 按键初始化
+Key_Scan_Result_t key_scan(KEY_t keys); // 按键扫描
 
 #endif /* __KEY_H */

@@ -14,6 +14,7 @@
 #include "task.h"
 #include "main.h"
 #include "portmacro.h"
+#include "gd32f1x0.h"
 
 extern TaskHandle_t SEND1Task_Handler;
 
@@ -50,3 +51,34 @@ void EXTI0_1_IRQHandler(void)
         exti_interrupt_flag_clear(BOARD_BTN_EXTI_LINE); // 清除中断标志
     }
 }
+
+/*******************************************************************************
+function_name: key_scan
+description: 按键扫描
+calls:
+called by:
+input: KEY_t
+output:
+return: Key_Scan_Result_t
+others:
+*******************************************************************************/
+Key_Scan_Result_t key_scan(KEY_t keys)
+{
+    FlagStatus state;
+    switch(keys)
+    {
+    case KEY1:
+        state = gpio_input_bit_get(BOARD_BTN_PORT, BOARD_BTN_PIN);
+        if(state == RESET) {
+            while(SET != gpio_input_bit_get(BOARD_BTN_PORT, BOARD_BTN_PIN)) {
+                return KEY_ON;
+            }
+        } else {
+            return KEY_OFF;
+        }
+        break;
+    default:
+        break;
+    }
+    return KEY_ERROR;
+} // key_scan
