@@ -15,8 +15,10 @@
 #include "main.h"
 #include "portmacro.h"
 #include "gd32f1x0.h"
+#include "semphr.h"
 
 extern TaskHandle_t SEND1Task_Handler;
+extern SemaphoreHandle_t semaphore_handle_1;
 
 /*
     按键初始化
@@ -42,12 +44,13 @@ void key_init(void)
 */
 void EXTI0_1_IRQHandler(void)
 {
-
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    
     if(RESET != exti_interrupt_flag_get(BOARD_BTN_EXTI_LINE)) {
-//        BaseType_t xYieldRequired = xTaskResumeFromISR(SEND1Task_Handler);
-//        if (xYieldRequired == pdTRUE) {
-//            portYIELD_FROM_ISR(xYieldRequired);
-//        }
+        // 释放信号量 1
+        xSemaphoreGiveFromISR(semaphore_handle_1, &xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+        
         exti_interrupt_flag_clear(BOARD_BTN_EXTI_LINE); // 清除中断标志
     }
 }
